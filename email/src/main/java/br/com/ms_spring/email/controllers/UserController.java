@@ -14,6 +14,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
 import java.net.URI;
@@ -30,7 +31,9 @@ import br.com.ms_spring.email.models.RoleModel;
 import br.com.ms_spring.email.models.UserModel;
 import br.com.ms_spring.email.services.UserService;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -64,29 +67,44 @@ public class UserController {
     @PostMapping("/token/refresh")
     public void  refreshToken (HttpServletRequest request, HttpServletResponse response) throws IOException {
         String authorizationHeader = request.getHeader(org.springframework.http.HttpHeaders.AUTHORIZATION);
+        
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 
             try {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JavaTimeModule());
+
                 String refresh_token = authorizationHeader.substring("Bearer ".length());
                 Algorithm algorithm = Algorithm.HMAC256("MSEmail1002".getBytes());
                 JWTVerifier verifier = JWT.require(algorithm).build();
                 DecodedJWT decodedJWT = verifier.verify(refresh_token);
                 String userName = decodedJWT.getSubject();
                 UserModel user = userService.getUser(userName);
+                
                 String access_token = JWT.create()
                     .withSubject(user.getUsername())
                     .withExpiresAt(new Date(System.currentTimeMillis()+10*60*1000))
                     .withIssuer(request.getRequestURL().toString())
                     .withClaim("roles", user.getRoles().stream().map(RoleModel::getName).collect(Collectors.toList()))
                     .sign(algorithm);
+                
+                refresh_token = JWT.create()
+                    .withSubject(user.getUsername())
+                    .withExpiresAt(new Date(System.currentTimeMillis()+30*60*1000))
+                    .withIssuer(request.getRequestURL().toString())
+                    .sign(algorithm);
+                    
+                //String userJson = mapper.writeValueAsString(user);
 
                 Map<String, String> tokens = new HashMap<>();
                 tokens.put("access_token", access_token);
                 tokens.put("refresh_token", refresh_token);
+                //tokens.put("user", userJson);
                 response.setContentType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE);
                 new ObjectMapper().writeValue(response.getOutputStream(), tokens);
 
             } catch (Exception e) {
+                log.info("Error: {}", e.getMessage());
                 response.setHeader("error", e.getMessage());
                 response.setStatus(org.springframework.http.HttpStatus.FORBIDDEN.value());
                 Map<String, String> error = new HashMap<>();

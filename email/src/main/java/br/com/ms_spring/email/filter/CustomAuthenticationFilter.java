@@ -61,11 +61,18 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
                     .withSubject(user.getUsername())
                     .withExpiresAt(new Date(System.currentTimeMillis()+30*60*1000))
                     .withIssuer(request.getRequestURL().toString())
-                    .sign(algorithm);            
+                    .sign(algorithm); 
+                    
+        ObjectMapper mapper = new ObjectMapper();
+        String userJson = mapper.writeValueAsString(user);
 
         Map<String, String> tokens = new HashMap<>();
         tokens.put("access_token", access_token);
         tokens.put("refresh_token", refresh_token);
+        if (userJson != null) {
+            tokens.put("user", userJson);
+        }
+        
         response.setContentType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE);
 
         //log.info("Response: {}",request.getHeader("Origin"));

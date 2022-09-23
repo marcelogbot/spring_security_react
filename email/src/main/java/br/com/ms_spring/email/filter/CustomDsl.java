@@ -46,11 +46,11 @@ public class CustomDsl extends AbstractHttpConfigurer<CustomDsl, HttpSecurity> {
 			//.addFilterBefore(new RestAuthenticationFilter(authenticationManager()), LogoutFilter.class);
 		http.logout(logout -> logout                                                
 			.logoutUrl("/api/logout")                                            
-			//.logoutSuccessUrl("/api/login")                                      
+			.logoutSuccessUrl("/")                                      
 			.logoutSuccessHandler(new SimpleUrlLogoutSuccessHandler())                         
 			.invalidateHttpSession(true)                                        
 			//.addLogoutHandler(logoutHandler)                                    
-			.deleteCookies("dummyCookie")                                  
+			.deleteCookies("SessionID")                                  
 		);
 	}
 
