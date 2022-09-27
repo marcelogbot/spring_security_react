@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -19,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Data
 @Entity
@@ -31,13 +33,20 @@ public class UserModel implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long userID;
+    
     private String name;
-    private String userName;
+
+    @NonNull
+    private String username;
+    @NonNull
     private String password;
+    @NonNull
     private String email;
     private LocalDateTime createDate;
-    @ManyToMany(fetch = FetchType.EAGER)
+    
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Collection<RoleModel> roles = new ArrayList<>();
+    
     private Boolean locked = false;
     private Boolean enabled = false;
 
@@ -53,7 +62,7 @@ public class UserModel implements UserDetails {
     }
     @Override
     public String getUsername() {
-        return userName;
+        return username;
     }
 
     @Override

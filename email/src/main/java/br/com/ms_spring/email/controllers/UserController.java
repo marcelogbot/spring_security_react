@@ -2,6 +2,7 @@ package br.com.ms_spring.email.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,9 +48,18 @@ public class UserController {
     }
 
     @PostMapping("/user/save")
-    public ResponseEntity<UserModel> saveUser(@RequestBody UserModel newUser) {
+    public ResponseEntity<?> saveUser(@RequestBody UserModel newUser) {
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/save").toUriString());
+
         return ResponseEntity.created(uri).body(userService.saveUser(newUser));
+    }
+
+    @DeleteMapping("/user/delete")
+    public String deleteUser(@RequestBody UserModel user) {
+        UserModel userModel = userService.getUser(user.getUsername());
+        userService.deleteUser(userModel);
+        log.info("User ({}) deleted.", userModel.getUserID()+" - "+userModel.getUsername());
+        return "User - "+userModel.getUsername()+" - deleted.";
     }
 
     @PostMapping("/role/save")

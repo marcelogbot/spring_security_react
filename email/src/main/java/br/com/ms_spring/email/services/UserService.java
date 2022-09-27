@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.ms_spring.email.models.ConfirmationTokenModel;
 import br.com.ms_spring.email.models.RoleModel;
 import br.com.ms_spring.email.models.UserModel;
+import br.com.ms_spring.email.repositories.ConfirmationTokenReposiroty;
 import br.com.ms_spring.email.repositories.RoleRepository;
 import br.com.ms_spring.email.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,9 @@ public class UserService implements UserDetailsService {
     private UserRepository userRepository;
 
     @Autowired
+    private ConfirmationTokenReposiroty confirmationTokenReposiroty;
+
+    @Autowired
     private RoleRepository roleRepository;
 
     @Autowired
@@ -42,7 +46,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserModel userModel = userRepository.findByUserName(username);
+        UserModel userModel = userRepository.findByUsername(username);
 
         if (userModel == null) {
             log.error("User ("+username+") not found.");
@@ -68,7 +72,7 @@ public class UserService implements UserDetailsService {
         UserModel userTransition = null;
         
         boolean emailExists = (userRepository.findByEmail(userModel.getEmail()) != null);                      
-        UserModel userUpdate = userRepository.findByUserName(userModel.getUsername());                    
+        UserModel userUpdate = userRepository.findByUsername(userModel.getUsername());                    
     
         if (emailExists && userUpdate != null) {
 
@@ -81,7 +85,7 @@ public class UserService implements UserDetailsService {
             userUpdate.setName(userModel.getName());
             userUpdate.setEmail(userModel.getEmail());
             userUpdate.setPassword(userModel.getPassword());
-            userUpdate.setUserName(userModel.getUsername());
+            userUpdate.setUsername(userModel.getUsername());
 
             userRepository.save(userUpdate);   
             userTransition = userUpdate;    
@@ -112,13 +116,33 @@ public class UserService implements UserDetailsService {
 
     public UserModel saveUser(UserModel userModel) {
         
-        UserModel userFinded = userRepository.findByUserName(userModel.getUsername());
-        if (userFinded == null) {
-            log.info("New user({}) save in database",userModel.getUsername());
-            userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
-            return userRepository.save(userModel);
+        UserModel userFindedUsername = userRepository.findByUsername(userModel.getUsername());
+        
+        if (userFindedUsername == null) {
+            
+            UserModel userFindedEmail = userRepository.findByEmail(userModel.getEmail());
+            
+            if (userFindedEmail == null) {
+                log.info("New user({}) save in database",userModel.getUsername());
+                userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
+                if (userModel.getRoles().size() == 0 ) {
+                    RoleModel role = roleRepository.findByName("ROLE_USER");
+                    Collection<RoleModel> roles = new ArrayList<>();
+                    roles.add(role);
+                    userModel.setRoles(roles);
+                }
+                userModel.setCreateDate(LocalDateTime.now());
+                log.info("NewUser: {}",userModel);
+                return userRepository.save(userModel);
+            } else {
+                log.info("User e-mail already in use - "+userModel.getEmail());
+                userModel.setUsername("");
+            return userModel;
+            }
+            
         } else {
-            log.info("User already exists - "+userModel.getUsername());
+            log.info("Username already exists - "+userModel.getUsername());
+            userModel.setEmail("");
             return userModel;
         }
     }
@@ -137,7 +161,7 @@ public class UserService implements UserDetailsService {
 
     public void addRoleToUser(String userName, String roleName) {
         
-        UserModel userModel = userRepository.findByUserName(userName);
+        UserModel userModel = userRepository.findByUsername(userName);
         RoleModel roleModel = roleRepository.findByName(roleName);
         List<RoleModel> rolesUser = new ArrayList<>(userModel.getRoles());
 
@@ -152,7 +176,7 @@ public class UserService implements UserDetailsService {
 
     public UserModel getUser(String userName) {
         log.info("Get user: {}.", userName);
-        return userRepository.findByUserName(userName);
+        return userRepository.findByUsername(userName);
     }
 
     public List<UserModel> getAllUsers(){
@@ -163,5 +187,12 @@ public class UserService implements UserDetailsService {
     public void enableUserModel(UserModel userModel) {
         userModel.setEnabled(true);
         userRepository.save(userModel);
+    }
+
+    public void deleteUser(UserModel userModel) {
+        ConfirmationTokenModel confirmationTokenModel = confirmationTokenReposiroty.findByUserModel(userModel);
+        confirmationTokenReposiroty.delete(confirmationTokenModel);
+        userModel.getRoles().removeAll(userModel.getRoles());
+        userRepository.deleteById(userModel.getUserID());
     }
 }

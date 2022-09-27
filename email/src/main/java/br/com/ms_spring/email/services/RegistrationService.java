@@ -36,7 +36,7 @@ public class RegistrationService {
         roles.add(role);
         String token = userService.signUpUser(new UserModel(null,
             request.getName(),
-            request.getUserName(),
+            request.getUsername(),
             request.getPassword(),
             request.getEmail(),
             LocalDateTime.now(),

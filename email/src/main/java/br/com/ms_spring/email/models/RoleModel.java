@@ -23,6 +23,7 @@ public class RoleModel implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long roleID;
+    
     private String name;
 
 }
