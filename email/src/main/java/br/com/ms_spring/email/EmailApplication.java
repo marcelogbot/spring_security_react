@@ -25,7 +25,7 @@ public class EmailApplication {
 			userService.saveRole(new RoleModel(null,"ROLE_USER"));
 			userService.saveRole(new RoleModel(null,"ROLE_ADMIN"));
 			
-			userService.saveUser(new UserModel(null, "Marcelo Botelho",
+			userService.saveUser(new UserModel(null, "Marcelo", "G Botelho",
 											 "marcelo", "1234", "marcunb@gmail.com",
 											  LocalDateTime.now(), new ArrayList<>(), false, true));
 			

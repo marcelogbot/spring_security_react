@@ -2,8 +2,10 @@ package br.com.ms_spring.email.models;
 
 import java.time.LocalDateTime;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.JoinColumn;
@@ -31,7 +33,7 @@ public class ConfirmationTokenModel {
     private LocalDateTime expiresAt;
 
     private LocalDateTime confirmedAt;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(nullable = false, name = "userId")
     private UserModel userModel;
 

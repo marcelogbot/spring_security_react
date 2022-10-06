@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,6 +49,11 @@ public class UserController {
         return ResponseEntity.ok().body(userService.getAllUsers());
     }
 
+    @GetMapping("/user/{username}")
+    public ResponseEntity<UserModel> getUser(@PathVariable(value = "username") String username) {
+        return ResponseEntity.ok().body(userService.getUser(username));
+    }
+
     @PostMapping("/user/save")
     public ResponseEntity<?> saveUser(@RequestBody UserModel newUser) {
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/save").toUriString());
@@ -54,12 +61,30 @@ public class UserController {
         return ResponseEntity.created(uri).body(userService.saveUser(newUser));
     }
 
+    @PutMapping("/user/update")
+    public ResponseEntity<?> updateUser(@RequestBody UserModel newUser) {
+        URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/update").toUriString());
+
+        return ResponseEntity.created(uri).body(userService.updateUser(newUser));
+    }
+
     @DeleteMapping("/user/delete")
-    public String deleteUser(@RequestBody UserModel user) {
+    public void deleteUser(@RequestBody UserModel user) {
+        if(user.getUsername() == null) {
+            user.setUsername("");
+        }
         UserModel userModel = userService.getUser(user.getUsername());
         userService.deleteUser(userModel);
         log.info("User ({}) deleted.", userModel.getUserID()+" - "+userModel.getUsername());
-        return "User - "+userModel.getUsername()+" - deleted.";
+    }
+
+    @PutMapping("/user/enable") 
+    public void enableUser(@RequestBody UserModel userToEnable) {
+        if(userToEnable.getUsername() == null) {
+            userToEnable.setUsername("");
+        }
+        UserModel userModel = userService.getUser(userToEnable.getUsername());
+        userService.enableUserModel(userModel);
     }
 
     @PostMapping("/role/save")

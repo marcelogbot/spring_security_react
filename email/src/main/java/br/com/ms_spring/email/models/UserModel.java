@@ -34,7 +34,8 @@ public class UserModel implements UserDetails {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long userID;
     
-    private String name;
+    private String firstname;
+    private String lastname;
 
     @NonNull
     private String username;

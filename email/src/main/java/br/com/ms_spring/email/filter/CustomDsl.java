@@ -24,8 +24,7 @@ public class CustomDsl extends AbstractHttpConfigurer<CustomDsl, HttpSecurity> {
 
          config.addAllowedOrigin("http://localhost:3000");
          config.addAllowedHeader("*");
-         config.addAllowedMethod("GET");
-        // config.addAllowedMethod("PUT");
+         //config.addAllowedMethod("GET");
          config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
 
@@ -35,7 +34,8 @@ public class CustomDsl extends AbstractHttpConfigurer<CustomDsl, HttpSecurity> {
 		http.authorizeRequests().antMatchers("/api/v1/registration").permitAll();
         http.authorizeRequests().antMatchers("/api/login/**", "/api/token/refresh/**").permitAll();
 		http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/user/**").hasAnyAuthority("ROLE_USER","ROLE_ADMIN");
-    	http.authorizeRequests().antMatchers(HttpMethod.POST, "/api/user/save/**").hasAnyAuthority("ROLE_ADMIN");
+    	http.authorizeRequests().antMatchers(HttpMethod.POST, "/api/user/**").hasAnyAuthority("ROLE_ADMIN");
+		http.authorizeRequests().antMatchers(HttpMethod.PUT, "/api/user/**").hasAnyAuthority("ROLE_ADMIN");
 		http.authorizeRequests().anyRequest().authenticated();
 		// http.formLogin();
 		 http

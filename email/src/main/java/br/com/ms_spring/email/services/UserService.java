@@ -45,7 +45,7 @@ public class UserService implements UserDetailsService {
     private ConfirmationTokenService confirmationTokenService;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DisabledException {
         UserModel userModel = userRepository.findByUsername(username);
 
         if (userModel == null) {
@@ -82,7 +82,8 @@ public class UserService implements UserDetailsService {
                 throw new IllegalStateException("User already exists!");
             }
             userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
-            userUpdate.setName(userModel.getName());
+            userUpdate.setFirstname(userModel.getFirstname());
+            userUpdate.setLastname(userModel.getLastname());
             userUpdate.setEmail(userModel.getEmail());
             userUpdate.setPassword(userModel.getPassword());
             userUpdate.setUsername(userModel.getUsername());
@@ -116,6 +117,13 @@ public class UserService implements UserDetailsService {
 
     public UserModel saveUser(UserModel userModel) {
         
+        if(userModel.getFirstname().equals("") || 
+            userModel.getEmail().equals("") || 
+            userModel.getPassword().equals("")) {
+                log.info("The value of Name, Username, Email and Password not do empty - "+userModel);
+            return userModel;
+        }
+
         UserModel userFindedUsername = userRepository.findByUsername(userModel.getUsername());
         
         if (userFindedUsername == null) {
@@ -123,7 +131,6 @@ public class UserService implements UserDetailsService {
             UserModel userFindedEmail = userRepository.findByEmail(userModel.getEmail());
             
             if (userFindedEmail == null) {
-                log.info("New user({}) save in database",userModel.getUsername());
                 userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
                 if (userModel.getRoles().size() == 0 ) {
                     RoleModel role = roleRepository.findByName("ROLE_USER");
@@ -132,7 +139,7 @@ public class UserService implements UserDetailsService {
                     userModel.setRoles(roles);
                 }
                 userModel.setCreateDate(LocalDateTime.now());
-                log.info("NewUser: {}",userModel);
+                log.info("New user save: {}",userModel.getUsername());
                 return userRepository.save(userModel);
             } else {
                 log.info("User e-mail already in use - "+userModel.getEmail());
@@ -147,6 +154,51 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    public UserModel updateUser(UserModel userModel) {
+
+        if (userModel.getUsername().equals("") || 
+            userModel.getEmail().equals("")) {
+            log.info("The value of Username and Email not do empty - "+userModel);
+            return userModel;
+        }
+        
+        UserModel userOriginal = userRepository.findByUsername(userModel.getUsername());
+        UserModel userFindedEmail = null;
+        if (!userOriginal.getEmail().equals(userModel.getEmail())) {
+            
+            userFindedEmail = userRepository.findByEmail(userModel.getEmail());
+        }
+        
+            if (userFindedEmail == null) {
+                
+                log.info("Update user({}) in database",userModel.getUsername());
+                
+                if(!userModel.getPassword().equals("")){
+                    userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
+                } else {
+                    userModel.setPassword(userOriginal.getPassword());
+                }
+                userModel.setCreateDate(userOriginal.getCreateDate());
+                userModel.setEnabled(userOriginal.getEnabled());
+                userModel.setLocked(userOriginal.getLocked());
+
+                Collection<RoleModel> roles = new ArrayList<>();
+                for (RoleModel role : userOriginal.getRoles()) {
+                    roles.add(role);
+                }
+                userModel.setRoles(roles);
+                
+                return userRepository.save(userModel);
+
+        } else {
+
+            log.info("User e-mail already in use - "+userModel.getEmail());
+            userModel.setUsername("");
+            return userModel;
+        }
+            
+    }
+
     public RoleModel saveRole(RoleModel roleModel) {
         RoleModel roleFinded = roleRepository.findByName(roleModel.getName());
         if (roleFinded == null) {
@@ -159,24 +211,24 @@ public class UserService implements UserDetailsService {
         
     }
 
-    public void addRoleToUser(String userName, String roleName) {
+    public void addRoleToUser(String username, String roleName) {
         
-        UserModel userModel = userRepository.findByUsername(userName);
+        UserModel userModel = userRepository.findByUsername(username);
         RoleModel roleModel = roleRepository.findByName(roleName);
         List<RoleModel> rolesUser = new ArrayList<>(userModel.getRoles());
 
         if (rolesUser.contains(roleModel)) {
             log.info("Role already exists - "+roleModel.getName());
         } else {
-            log.info("Adding role ("+roleName+") to user ("+userName+").");
+            log.info("Adding role ("+roleName+") to user ("+username+").");
             userModel.getRoles().add(roleModel);
             userRepository.save(userModel);
         }
     }
 
-    public UserModel getUser(String userName) {
-        log.info("Get user: {}.", userName);
-        return userRepository.findByUsername(userName);
+    public UserModel getUser(String username) {
+        log.info("Get user: {}.", username);
+        return userRepository.findByUsername(username);
     }
 
     public List<UserModel> getAllUsers(){
@@ -185,13 +237,16 @@ public class UserService implements UserDetailsService {
     }
 
     public void enableUserModel(UserModel userModel) {
-        userModel.setEnabled(true);
+        userModel.setEnabled(!userModel.getEnabled());
         userRepository.save(userModel);
     }
 
     public void deleteUser(UserModel userModel) {
         ConfirmationTokenModel confirmationTokenModel = confirmationTokenReposiroty.findByUserModel(userModel);
-        confirmationTokenReposiroty.delete(confirmationTokenModel);
+        if(confirmationTokenModel != null) {
+            confirmationTokenReposiroty.delete(confirmationTokenModel);
+        }
+        
         userModel.getRoles().removeAll(userModel.getRoles());
         userRepository.deleteById(userModel.getUserID());
     }
