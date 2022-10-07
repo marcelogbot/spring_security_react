@@ -34,7 +34,7 @@ public class ConfirmationTokenModel {
 
     private LocalDateTime confirmedAt;
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(nullable = false, name = "userId")
+    @JoinColumn(nullable = false, name = "user_id")
     private UserModel userModel;
 
     public ConfirmationTokenModel(String token, LocalDateTime createdAt,

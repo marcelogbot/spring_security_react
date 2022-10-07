@@ -78,15 +78,19 @@ public class UserService implements UserDetailsService {
 
             boolean alreadyConfirmedToken = confirmationTokenService.alreadyConfirmedToken(userUpdate);
 
-            if (alreadyConfirmedToken) {
+            if (alreadyConfirmedToken || userUpdate.getEnabled()) {
+
                 throw new IllegalStateException("User already exists!");
             }
-            userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
+            
             userUpdate.setFirstname(userModel.getFirstname());
             userUpdate.setLastname(userModel.getLastname());
             userUpdate.setEmail(userModel.getEmail());
-            userUpdate.setPassword(userModel.getPassword());
             userUpdate.setUsername(userModel.getUsername());
+            if (userModel.getPassword().equals("") ||userModel.getPassword() == null) {
+                throw new IllegalStateException("Password not be empty!");
+            }
+            userUpdate.setPassword(passwordEncoder.encode(userModel.getPassword()));
 
             userRepository.save(userUpdate);   
             userTransition = userUpdate;    
@@ -94,9 +98,13 @@ public class UserService implements UserDetailsService {
         } else {
 
             if (emailExists) {
+
                 throw new IllegalStateException("E-mail already in use!");
             }
 
+            if (userModel.getPassword().equals("") ||userModel.getPassword() == null) {
+                throw new IllegalStateException("Password not be empty!");
+            }
             userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
             userRepository.save(userModel);
             userTransition = userModel;
@@ -109,6 +117,7 @@ public class UserService implements UserDetailsService {
             LocalDateTime.now().plusMinutes(15),
             userTransition
             );
+
         confirmationTokenService.saveConfirmationToken(confirmationTokenModel);
 
 
@@ -242,12 +251,15 @@ public class UserService implements UserDetailsService {
     }
 
     public void deleteUser(UserModel userModel) {
-        ConfirmationTokenModel confirmationTokenModel = confirmationTokenReposiroty.findByUserModel(userModel);
-        if(confirmationTokenModel != null) {
-            confirmationTokenReposiroty.delete(confirmationTokenModel);
+        ConfirmationTokenModel confirmationResult = confirmationTokenReposiroty.findByUserModel(userModel);
+        if (confirmationResult != null) {
+            confirmationResult.setUserModel(null);
+            confirmationTokenReposiroty.deleteById(confirmationResult.getId());
         }
-        
-        userModel.getRoles().removeAll(userModel.getRoles());
+            
+        if (userModel.getRoles().size() > 0) {
+            userModel.getRoles().removeAll(userModel.getRoles());
+        }  
         userRepository.deleteById(userModel.getUserID());
     }
 }

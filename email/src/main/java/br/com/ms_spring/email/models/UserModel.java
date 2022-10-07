@@ -12,6 +12,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,7 +26,9 @@ import lombok.NonNull;
 @Data
 @Entity
 @NoArgsConstructor @AllArgsConstructor
-@Table(name = "TB_USER")
+@Table(name = "TB_USER", uniqueConstraints=
+                                @UniqueConstraint(columnNames={"username", "email"})
+        )
 public class UserModel implements UserDetails {
 
     private static final long serialVersionUID = 1L;
@@ -39,10 +42,13 @@ public class UserModel implements UserDetails {
 
     @NonNull
     private String username;
-    @NonNull
+
+    @NonNull 
     private String password;
+
     @NonNull
     private String email;
+
     private LocalDateTime createDate;
     
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -50,7 +56,6 @@ public class UserModel implements UserDetails {
     
     private Boolean locked = false;
     private Boolean enabled = false;
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

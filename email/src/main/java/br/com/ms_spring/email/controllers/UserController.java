@@ -75,7 +75,7 @@ public class UserController {
         }
         UserModel userModel = userService.getUser(user.getUsername());
         userService.deleteUser(userModel);
-        log.info("User ({}) deleted.", userModel.getUserID()+" - "+userModel.getUsername());
+        log.info("User ({}) deleted.", userModel.getUserID()+"-"+userModel.getUsername());
     }
 
     @PutMapping("/user/enable") 

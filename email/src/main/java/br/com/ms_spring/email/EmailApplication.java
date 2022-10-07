@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 
 import br.com.ms_spring.email.models.RoleModel;
 import br.com.ms_spring.email.models.UserModel;
+import br.com.ms_spring.email.services.ConfirmationTokenService;
 import br.com.ms_spring.email.services.UserService;
 
 @SpringBootApplication
@@ -20,7 +21,7 @@ public class EmailApplication {
 	}
 
 	@Bean
-	CommandLineRunner run(UserService userService) {
+	CommandLineRunner run(UserService userService, ConfirmationTokenService confirmationTokenService) {
 		return args -> {
 			userService.saveRole(new RoleModel(null,"ROLE_USER"));
 			userService.saveRole(new RoleModel(null,"ROLE_ADMIN"));
@@ -28,9 +29,14 @@ public class EmailApplication {
 			userService.saveUser(new UserModel(null, "Marcelo", "G Botelho",
 											 "marcelo", "1234", "marcunb@gmail.com",
 											  LocalDateTime.now(), new ArrayList<>(), false, true));
+			userService.saveUser(new UserModel(null, "Fulano", "De Tal",
+											  "fulano", "1234", "fulano@fulano.com",
+											   LocalDateTime.now(), new ArrayList<>(), false, true));
 			
 			userService.addRoleToUser("marcelo", "ROLE_ADMIN");
 			userService.addRoleToUser("marcelo", "ROLE_USER");
+			userService.addRoleToUser("fulano", "ROLE_USER");
+			userService.addRoleToUser("fulano", "ROLE_ADMIN");
 		};
 	}
 
