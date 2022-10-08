@@ -235,6 +235,21 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    public void removeRoleToUser(String username, String roleName) {
+        
+        UserModel userModel = userRepository.findByUsername(username);
+        RoleModel roleModel = roleRepository.findByName(roleName);
+        List<RoleModel> rolesUser = new ArrayList<>(userModel.getRoles());
+
+        if (!rolesUser.contains(roleModel)) {
+            log.info("Role do not exists - "+roleModel.getName());
+        } else {
+            log.info("Remove role ("+roleName+") to user ("+username+").");
+            userModel.getRoles().remove(roleModel);
+            userRepository.save(userModel);
+        }
+    }
+
     public UserModel getUser(String username) {
         log.info("Get user: {}.", username);
         return userRepository.findByUsername(username);
@@ -262,4 +277,10 @@ public class UserService implements UserDetailsService {
         }  
         userRepository.deleteById(userModel.getUserID());
     }
+
+    public List<RoleModel> getAllRoles(){
+        log.info("List all roles.");
+        return roleRepository.findAll();
+    }
+
 }

@@ -95,7 +95,14 @@ public class UserController {
 
     @PostMapping("/role/addtouser")
     public ResponseEntity<?> addRoleToUser(@RequestBody RoleToUserForm form) {
-        userService.addRoleToUser(form.getUserName(), form.getRoleName());
+        log.info("Form: {}", form);
+        userService.addRoleToUser(form.getUsername(), form.getRoleName());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/role/removetouser")
+    public ResponseEntity<?> removeRoleToUser(@RequestBody RoleToUserForm form) {
+        userService.removeRoleToUser(form.getUsername(), form.getRoleName());
         return ResponseEntity.ok().build();
     }
 
@@ -154,10 +161,14 @@ public class UserController {
 
     }
     
+    @GetMapping("/roles")
+    public ResponseEntity<List<RoleModel>> getAllRoles() {
+        return ResponseEntity.ok().body(userService.getAllRoles());
+    }
 }
 
 @Data
 class RoleToUserForm {
-    private String userName;
+    private String username;
     private String roleName;
 }
