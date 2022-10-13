@@ -6,11 +6,16 @@ import java.util.Collection;
 
 import javax.transaction.Transactional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import br.com.ms_spring.email.controllers.RegistrationRequest;
+import br.com.ms_spring.email.enums.StatusEmail;
+import br.com.ms_spring.email.kafkaMS.kafkaProducers.ProducerSendEmail;
 import br.com.ms_spring.email.models.ConfirmationTokenModel;
+import br.com.ms_spring.email.models.EmailModel;
 import br.com.ms_spring.email.models.RoleModel;
 import br.com.ms_spring.email.models.UserModel;
 import br.com.ms_spring.email.repositories.RoleRepository;
@@ -23,9 +28,26 @@ public class RegistrationService {
     private final EmailValidator emailValidator;
     private final RoleRepository roleRepository;
     private final ConfirmationTokenService confirmationTokenService;
-    private final EmailSender emailSender;
+    //private final EmailSender emailSender;
 
-    public String register (RegistrationRequest request) {
+    @Autowired
+    private ProducerSendEmail prodSendEmail;
+
+    public String register (RegistrationRequest request) throws JsonProcessingException {
+
+        //Teste de envio de e-mail por microservice (Usando KAFKA)
+        EmailModel email = new EmailModel();
+        email.setEmailFrom("marcunb@gmail.com");
+        email.setEmailID(001L);
+        email.setEmailTo("marcelogbot@gmail.com");
+        email.setOwnerRef("Marcelo");
+        email.setSendDateEmail(LocalDateTime.now());
+        email.setStatusEmail(StatusEmail.SENT);
+        email.setSubject("Teste de MicroService");
+
+        
+        //Fim do teste
+
         Boolean isValidEmail = emailValidator.test(request.getEmail());
 
         if (!isValidEmail) {
@@ -47,8 +69,12 @@ public class RegistrationService {
         ));
 
         String link = "http://localhost:8080/api/v1/registration/confirm?token="+token;
+        email.setText(buildEmail(request.getFirstname(), link));
+        prodSendEmail.send(email);
         //String link = token;
-        emailSender.send(request.getEmail(), buildEmail(request.getFirstname(), link));
+        //emailSender.send(request.getEmail(), buildEmail(request.getFirstname(), link));
+
+
 
         return token;
     }

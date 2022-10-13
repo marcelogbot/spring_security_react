@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import br.com.ms_spring.email.services.RegistrationService;
 import lombok.AllArgsConstructor;
 
@@ -20,7 +22,7 @@ public class RegistrationController {
     private RegistrationService registrationService;
 
     @PostMapping
-    public String register(@RequestBody RegistrationRequest request) {
+    public String register(@RequestBody RegistrationRequest request) throws JsonProcessingException {
         return registrationService.register(request);
     }
 

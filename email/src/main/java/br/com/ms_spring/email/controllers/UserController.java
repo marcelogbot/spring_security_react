@@ -16,6 +16,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -45,7 +46,7 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserModel>> getAllUsers() {
+    public ResponseEntity<List<UserModel>> getAllUsers() throws JsonProcessingException {
         return ResponseEntity.ok().body(userService.getAllUsers());
     }
 
@@ -165,6 +166,7 @@ public class UserController {
     public ResponseEntity<List<RoleModel>> getAllRoles() {
         return ResponseEntity.ok().body(userService.getAllRoles());
     }
+
 }
 
 @Data
